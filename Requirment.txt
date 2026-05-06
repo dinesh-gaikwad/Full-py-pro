@@ -1,5 +1,0 @@
-Django>=4.2
-channels>=4.0
-daphne
-channels-redis   # production साठी (Redis आवश्यक)
-asgiref

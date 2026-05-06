@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ludo Royale - Full Stack Game</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --red:#ef4444;--green:#10b981;--yellow:#f59e0b;--blue:#3b82f6;--gold:#fbbf24;
+  --bg:#0f172a;--bg-card:#1e293b;--bg-hover:#334155;--border:#334155;--text:#f8fafc;--text-muted:#94a3b8;--primary:#3b82f6;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter','Segoe UI',Roboto,sans-serif;}
+body{background:linear-gradient(135deg,#0f172a,#1e293b);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden;}
+
+.game-container{display:grid;grid-template-columns:1fr 380px;gap:30px;max-width:1500px;width:100%;}
+.board-section{background:var(--bg-card);border:3px solid var(--border);border-radius:24px;padding:30px;box-shadow:0 30px 90px rgba(0,0,0,0.6);position:relative;}
+#ludoCanvas{display:block;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);cursor:pointer;width:100%;height:auto;max-width:600px;}
+
+.control-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:35px;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-height:90vh;overflow-y:auto;}
+.logo{display:flex;align-items:center;gap:15px;margin-bottom:30px;}
+.logo-icon{width:50px;height:50px;background:linear-gradient(135deg,var(--red),var(--blue));border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+.logo-text{font-size:28px;font-weight:900;background:linear-gradient(135deg,#fff,#cbd5e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+.wallet{background:linear-gradient(135deg,var(--gold),#f59e0b);padding:14px 20px;border-radius:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 25px rgba(251,191,36,0.3);}
+.wallet-label{font-weight:800;color:#1a1a1a;font-size:14px;}
+.wallet-balance{font-weight:900;font-size:22px;color:#1a1a1a;}
+
+.player-turn{padding:18px;border-radius:14px;margin-bottom:25px;text-align:center;font-weight:800;font-size:20px;transition:all 0.4s;border:3px solid transparent;}
+.player-turn.red{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(239,68,68,0.3);}
+.player-turn.green{background:rgba(16,185,129,0.15);border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(16,185,129,0.3);}
+.player-turn.yellow{background:rgba(245,158,11,0.15);border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 20px rgba(245,158,11,0.3);}
+.player-turn.blue{background:rgba(59,130,246,0.15);border-color:var(--blue);color:var(--blue);box-shadow:0 0 20px rgba(59,130,246,0.3);}
+
+.dice-wrapper{display:flex;align-items:center;justify-content:center;margin:30px 0;gap:25px;}
+.dice{width:100px;height:100px;background:white;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:900;color:#1a1a1a;box-shadow:0 15px 40px rgba(0,0,0,0.3);transition:all 0.3s;}
+.dice.rolling{animation:roll 0.6s linear infinite;}
+@keyframes roll{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.1);}100%{transform:rotate(360deg) scale(1);}}
+
+.btn{background:linear-gradient(135deg,var(--primary),#2563eb);color:white;border:none;padding:16px 32px;border-radius:14px;cursor:pointer;font-weight:700;font-size:16px;width:100%;transition:all 0.3s;margin-bottom:14px;box-shadow:0 8px 25px rgba(59,130,246,0.3);}
+.btn:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8);transform:translateY(-4px);box-shadow:0 12px 35px rgba(59,130,246,0.5);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn.secondary{background:var(--bg);border:2px solid var(--border);box-shadow:none;}
+.btn.success{background:linear-gradient(135deg,var(--green),#059669);}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1a1a1a;}
+
+.input-group{margin-bottom:20px;}
+.input-label{display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:var(--text-muted);}
+.form-input{width:100%;padding:14px 18px;background:var(--bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;outline:none;transition:all 0.3s;}
+.form-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,0.1);}
+
+.player-list{margin-top:30px;}
+.player-card{background:var(--bg);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;transition:all 0.3s;}
+.player-card.active{border-color:var(--primary);background:rgba(59,130,246,0.1);box-shadow:0 0 20px rgba(59,130,246,0.2);}
+.player-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.player-name{font-weight:700;font-size:16px;}
+.player-color-dot{width:16px;height:16px;border-radius:50%;border:2px solid white;}
+.player-tokens{display:flex;gap:8px;flex-wrap:wrap;}
+.mini-token{width:24px;height:24px;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+
+.chat-section{margin-top:25px;border-top:1px solid var(--border);padding-top:20px;}
+.chat-messages{height:180px;overflow-y:auto;background:var(--bg);border-radius:10px;padding:12px;margin-bottom:10px;font-size:13px;}
+.chat-input-group{display:flex;gap:8px;}
+
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:1000;}
+.modal.active{display:flex;}
+.modal-content{background:var(--bg-card);border:2px solid var(--border);border-radius:28px;padding:50px;max-width:550px;width:90%;text-align:center;animation:slideUp 0.5s ease;max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{opacity:0;transform:translateY(50px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+.winner-crown{font-size:100px;margin-bottom:25px;animation:bounce 1.5s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(0deg);}25%{transform:translateY(-25px) rotate(-5deg);}75%{transform:translateY(-25px) rotate(5deg);}}
+
+.sound-toggle{position:fixed;top:25px;right:25px;background:var(--bg-card);border:2px solid var(--border);padding:14px;border-radius:16px;cursor:pointer;font-size:22px;z-index:100;transition:all 0.3s;}
+.sound-toggle:hover{background:var(--bg-hover);transform:scale(1.1);}
+
+.loading{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:2000;}
+.loading-spinner{width:60px;height:60px;border:4px solid var(--border);border-top:4px solid var(--primary);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+.tab-nav{display:flex;gap:10px;margin-bottom:25px;border-bottom:1px solid var(--border);padding-bottom:15px;}
+.tab-btn{flex:1;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text-muted);cursor:pointer;font-weight:600;transition:all 0.3s;}
+.tab-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;}
+.stat-value{font-size:28px;font-weight:800;margin-bottom:5px;color:var(--primary);}
+.stat-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+
+@media(max-width:1200px){.game-container{grid-template-columns:1fr;}}
+@media(max-width:640px){.control-panel{padding:25px;}}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="loading-spinner"></div>
+</div>
+
+<button class="sound-toggle" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<div class="game-container" id="gameContainer" style="display:none;">
+  <!-- GAME BOARD SECTION -->
+  <div class="board-section">
+    <canvas id="ludoCanvas" width="600" height="600"></canvas>
+  </div>
+
+  <!-- CONTROL PANEL SECTION -->
+  <div class="control-panel">
+    <div class="logo">
+      <div class="logo-icon">🎲</div>
+      <div class="logo-text">LUDO ROYALE</div>
+    </div>
+
+    <!-- WALLET SECTION -->
+    <div class="wallet" id="walletSection" style="display:none;">
+      <span class="wallet-label">🪙 COINS</span>
+      <span class="wallet-balance" id="coinBalance">1000</span>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="tab-nav" id="tabNav" style="display:none;">
+      <button class="tab-btn active" onclick="switchTab('game')">Game</button>
+      <button class="tab-btn" onclick="switchTab('wallet')">Wallet</button>
+      <button class="tab-btn" onclick="switchTab('admin')">Admin</button>
+    </div>
+
+    <!-- AUTH SECTION -->
+    <div id="authSection">
+      <div class="input-group">
+        <label class="input-label">Username</label>
+        <input type="text" class="form-input" id="authUsername" placeholder="Enter username">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <input type="password" class="form-input" id="authPassword" placeholder="Enter password">
+      </div>
+      <button class="btn" onclick="login()">Login</button>
+      <button class="btn secondary" onclick="register()">Register</button>
+    </div>
+
+    <!-- GAME SETUP SECTION -->
+    <div id="setupSection" style="display:none;">
+      <div class="input-group">
+        <label class="input-label">Game Mode</label>
+        <select class="form-input" id="gameMode" onchange="toggleAIDifficulty()">
+          <option value="multiplayer">Multiplayer 2-4 Players</option>
+          <option value="ai">Play vs AI</option>
+          <option value="private">Private Room</option>
+        </select>
+      </div>
+      <div class="input-group" id="aiDifficultyGroup" style="display:none;">
+        <label class="input-label">AI Difficulty</label>
+        <select class="form-input" id="aiDifficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="input-group" id="betAmountGroup" style="display:none;">
+        <label class="input-label">Bet Amount</label>
+        <input type="number" class="form-input" id="betAmount" value="100" min="10" max="1000">
+      </div>
+      <div class="input-group" id="roomCodeGroup" style="display:none;">
+        <label class="input-label">Room Code</label>
+        <input type="text" class="form-input" id="roomCode" placeholder="Enter 6-digit code">
+      </div>
+      <button class="btn" onclick="createOrJoinGame()">🚀 START GAME</button>
+      <button class="btn secondary" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
+      <button class="btn gold" onclick="claimDailyReward()">🎁 DAILY REWARD</button>
+    </div>
+
+    <!-- GAME SECTION -->
+    <div id="gameSection" style="display:none;">
+      <div class="player-turn red" id="playerTurn">WAITING FOR PLAYERS...</div>
+
+      <div class="dice-wrapper">
+        <div class="dice" id="dice">?</div>
+      </div>
+
+      <button class="btn" id="rollBtn" onclick="rollDice()" disabled>🎲 ROLL DICE</button>
+      <button class="btn secondary" onclick="resetGame()">🔄 NEW GAME</button>
+      <button class="btn secondary" onclick="watchReplay()">📺 WATCH REPLAY</button>
+
+      <div class="player-list" id="playerList"></div>
+
+      <!-- CHAT SECTION -->
+      <div class="chat-section">
+        <h3 style="margin-bottom:15px;font-size:16px;">💬 Game Chat</h3>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-group">
+          <input type="text" class="form-input" id="chatInput" placeholder="Type message..." style="flex:1;margin:0;">
+          <button class="btn" onclick="sendChat()" style="width:auto;padding:12px 20px;margin:0;">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET SECTION -->
+    <div id="walletTabSection" style="display:none;">
+      <h3 style="margin-bottom:20px;font-size:22px;">💰 Wallet History</h3>
+      <div id="transactionHistory" style="max-height:400px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="adminTabSection" style="display:none;">
+      <h3 style="margin-bottom:20px;font-size:22px;">📊 Admin Dashboard</h3>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
+        <div class="stat-card"><div class="stat-value" id="totalUsers">0</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-value" id="gamesToday">0</div><div class="stat-label">Games Today</div></div>
+        <div class="stat-card"><div class="stat-value" id="revenueToday">0</div><div class="stat-label">Coins Revenue</div></div>
+        <div class="stat-card"><div class="stat-value" id="activeGames">0</div><div class="stat-label">Active Games</div></div>
+      </div>
+      <button class="btn secondary" onclick="refreshAdminStats()" style="margin-top:20px;">🔄 Refresh Stats</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal active" id="authModal">
+  <div class="modal-content">
+    <div class="logo" style="justify-content:center;margin-bottom:35px;">
+      <div class="logo-icon">🎲</div>
+      <div class="logo-text">LUDO ROYALE</div>
+    </div>
+    <h2 style="font-size:32px;margin-bottom:25px;">Welcome!</h2>
+    <div class="input-group">
+      <input type="text" class="form-input" id="modalUsername" placeholder="Username">
+    </div>
+    <div class="input-group">
+      <input type="password" class="form-input" id="modalPassword" placeholder="Password">
+    </div>
+    <button class="btn" onclick="modalLogin()">Login</button>
+    <button class="btn secondary" onclick="modalRegister()">Register</button>
+  </div>
+</div>
+
+<!-- WIN MODAL -->
+<div class="modal" id="winModal">
+  <div class="modal-content">
+    <div class="winner-crown">👑</div>
+    <h2 style="font-size:42px;margin-bottom:20px;" id="winnerName">PLAYER WINS!</h2>
+    <p style="font-size:18px;color:var(--text-muted);margin-bottom:35px;" id="winMessage">Congratulations on completing all 4 tokens!</p>
+    <button class="btn" onclick="resetGame()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD MODAL -->
+<div class="modal" id="leaderboardModal">
+  <div class="modal-content">
+    <h2 style="font-size:32px;margin-bottom:30px;">🏆 LEADERBOARD</h2>
+    <div id="leaderboardList" style="max-height:400px;overflow-y:auto;"></div>
+    <button class="btn secondary" onclick="document.getElementById('leaderboardModal').classList.remove('active')" style="margin-top:25px;">CLOSE</button>
+  </div>
+</div>
+
+<!-- DAILY REWARD MODAL -->
+<div class="modal" id="dailyRewardModal">
+  <div class="modal-content">
+    <div style="font-size:80px;">🎁</div>
+    <h2 style="font-size:36px;margin-bottom:15px;">Daily Reward!</h2>
+    <p id="rewardText" style="font-size:20px;margin-bottom:25px;">You got 100 coins!</p>
+    <p id="streakText" style="color:var(--text-muted);margin-bottom:25px;">Day 1 Streak</p>
+    <button class="btn" onclick="document.getElementById('dailyRewardModal').classList.remove('active')">CLAIM</button>
+  </div>
+</div>
+
+<script>
+// ========== GAME CONFIG ==========
+const CANVAS_SIZE = 600;
+const CELL_SIZE = 40;
+const TOKEN_SIZE = 28;
+const COLORS = ['red', 'green', 'yellow', 'blue'];
+const COLOR_HEX = {'red':'#ef4444','green':'#10b981','yellow':'#f59e0b','blue':'#3b82f6'};
+const SAFE_POSITIONS = [0,8,13,21,26,34,39,47];
+
+const MAIN_PATH = [
+  [6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],
+  [0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],
+  [7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[8,8],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],
+  [14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],
+  [7,0]
+];
+
+const HOME_PATHS = {
+  red:[[6,2],[6,3],[6,4],[6,5],[6,6],[7,6]],
+  green:[[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]],
+  yellow:[[8,12],[8,11],[8,10],[8,9],[8,8],[7,8]],
+  blue:[[12,6],[11,6],[10,6],[9,6],[8,6],[7,6]]
+};
+
+const HOME_BASES = {
+  red:[[1,1],[1,3],[3,1],[3,3]],
+  green:[[1,11],[1,13],[3,11],[3,13]],
+  yellow:[[11,1],[11,3],[13,1],[13,3]],
+  blue:[[11,11],[11,13],[13,11],[13,13]]
+};
+
+const START_POSITIONS = {'red':0,'green':13,'yellow':26,'blue':39};
+
+// ========== GAME STATE ==========
+let canvas, ctx;
+let socket = null;
+let chatSocket = null;
+let gameId = null;
+let playerId = null;
+let playerColor = null;
+let playerName = null;
+let currentUser = JSON.parse(localStorage.getItem('ludoUser')||'null');
+let gameState = null;
+let soundEnabled = true;
+let audioContext = null;
+let selectedToken = null;
+let isAnimating = false;
+
+// ========== INITIALIZATION ==========
+window.addEventListener('load',()=>{
+  canvas=document.getElementById('ludoCanvas');
+  ctx=canvas.getContext('2d');
+  canvas.addEventListener('click',handleCanvasClick);
+  drawBoard();
+  if(currentUser){
+    document.getElementById('authModal').classList.remove('active');
+    showGameSetup();
+  }
+  setTimeout(()=>{document.getElementById('loading').style.display='none';document.getElementById('gameContainer').style.display='grid';},800);
+});
+
+// ========== AUDIO SYSTEM ==========
+function initAudio(){
+  if(!soundEnabled || audioContext) return;
+  audioContext=new (window.AudioContext||window.webkitAudioContext)();
+}
+function playSound(freq,duration,type='square',volume=0.15){
+  if(!soundEnabled||!audioContext) return;
+  const osc=audioContext.createOscillator();const gain=audioContext.createGain();
+  osc.connect(gain);gain.connect(audioContext.destination);
+  osc.frequency.value=freq;osc.type=type;
+  gain.gain.setValueAtTime(volume,audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,audioContext.currentTime+duration);
+  osc.start();osc.stop(audioContext.currentTime+duration);
+}
+const sounds={roll:()=>playSound(800,0.25),move:()=>playSound(500,0.12),kill:()=>playSound(250,0.4,'sawtooth',0.25),win:()=>{playSound(900,0.15);setTimeout(()=>playSound(1100,0.15),180);setTimeout(()=>playSound(1300,0.3),360);}};
+
+// ========== AUTH FUNCTIONS ==========
+async function modalLogin(){
+  const username=document.getElementById('modalUsername').value;
+  const password=document.getElementById('modalPassword').value;
+  if(!username||!password){alert('Please fill all fields');return;}
+  const res=await fetch(`/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:'POST'});
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  currentUser=data;localStorage.setItem('ludoUser',JSON.stringify(data));
+  document.getElementById('authModal').classList.remove('active');
+  showGameSetup();updateWalletUI();
+}
+
+async function modalRegister(){
+  const username=document.getElementById('modalUsername').value;
+  const password=document.getElementById('modalPassword').value;
+  if(!username||!password){alert('Please fill all fields');return;}
+  const res=await fetch(`/api/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:'POST'});
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  alert('Registered successfully! Now login');
+}
+
+async function login(){
+  const username=document.getElementById('authUsername').value;
+  const password=document.getElementById('authPassword').value;
+  const res=await fetch(`/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:'POST'});
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  currentUser=data;localStorage.setItem('ludoUser',JSON.stringify(data));
+  showGameSetup();updateWalletUI();
+}
+
+async function register(){
+  const username=document.getElementById('authUsername').value;
+  const password=document.getElementById('authPassword').value;
+  const res=await fetch(`/api/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:'POST'});
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  alert('Registered successfully! Now login');
+}
+
+function showGameSetup(){
+  document.getElementById('authSection').style.display='none';
+  document.getElementById('setupSection').style.display='block';
+  document.getElementById('tabNav').style.display='flex';
+  document.getElementById('walletSection').style.display='flex';
+}
+
+function toggleAIDifficulty(){
+  const mode=document.getElementById('gameMode').value;
+  document.getElementById('aiDifficultyGroup').style.display=mode==='ai'?'block':'none';
+  document.getElementById('betAmountGroup').style.display=mode==='multiplayer'?'block':'none';
+  document.getElementById('roomCodeGroup').style.display=mode==='private'?'block':'none';
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('setupSection').style.display=tab==='game'?'block':'none';
+  document.getElementById('walletTabSection').style.display=tab==='wallet'?'block':'none';
+  document.getElementById('adminTabSection').style.display=tab==='admin'?'block':'none';
+  if(tab==='wallet')loadWalletHistory();
+  if(tab==='admin')refreshAdminStats();
+}
+
+// ========== BOARD RENDERING ==========
+function drawBoard(){
+  ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+  for(let i=0;i<=15;i++){
+    ctx.beginPath();ctx.moveTo(i*CELL_SIZE,0);ctx.lineTo(i*CELL_SIZE,CANVAS_SIZE);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,i*CELL_SIZE);ctx.lineTo(CANVAS_SIZE,i*CELL_SIZE);ctx.stroke();
+  }
+
+  drawHomeArea(0,0,'red');
+  drawHomeArea(9,0,'green');
+  drawHomeArea(0,9,'yellow');
+  drawHomeArea(9,9,'blue');
+  drawMainPath();
+  drawCenter();
+  if(gameState)drawTokens();
+}
+
+function drawHomeArea(startRow,startCol,color){
+  const gradient=ctx.createLinearGradient(startRow*CELL_SIZE,startCol*CELL_SIZE,(startRow+6)*CELL_SIZE,(startCol+6)*CELL_SIZE);
+  gradient.addColorStop(0,COLOR_HEX[color]+'40');gradient.addColorStop(1,COLOR_HEX[color]+'20');
+  ctx.fillStyle=gradient;ctx.fillRect(startRow*CELL_SIZE,startCol*CELL_SIZE,6*CELL_SIZE,6*CELL_SIZE);
+  ctx.strokeStyle=COLOR_HEX[color];ctx.lineWidth=4;ctx.strokeRect(startRow*CELL_SIZE,startCol*CELL_SIZE,6*CELL_SIZE,6*CELL_SIZE);
+  const slots=[[1,1],[1,3],[3,1],[3,3]];
+  slots.forEach(([r,c])=>{
+    const x=(startRow+r)*CELL_SIZE+CELL_SIZE/2;const y=(startCol+c)*CELL_SIZE+CELL_SIZE/2;
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=3;ctx.stroke();
+  });
+}
+
+function drawMainPath(){
+  MAIN_PATH.forEach(([row,col],index)=>{
+    ctx.fillStyle='#f8fafc';ctx.fillRect(row*CELL_SIZE,col*CELL_SIZE,CELL_SIZE,CELL_SIZE);
+    ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.strokeRect(row*CELL_SIZE,col*CELL_SIZE,CELL_SIZE,CELL_SIZE);
+    if(SAFE_POSITIONS.includes(index)){
+      ctx.fillStyle='#f59e0b';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('★',row*CELL_SIZE+CELL_SIZE/2,col*CELL_SIZE+CELL_SIZE/2);
+    }
+    Object.entries(START_POSITIONS).forEach(([color,pos])=>{
+      if(index===pos){
+        ctx.fillStyle=COLOR_HEX[color];ctx.beginPath();
+        ctx.arc(row*CELL_SIZE+CELL_SIZE/2,col*CELL_SIZE+CELL_SIZE/2,10,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();
+      }
+    });
+  });
+}
+
+function drawCenter(){
+  const centerX=7.5*CELL_SIZE;const centerY=7.5*CELL_SIZE;
+  const gradient=ctx.createRadialGradient(centerX,centerY,0,centerX,centerY,3*CELL_SIZE);
+  gradient.addColorStop(0,'#3b82f6');gradient.addColorStop(0.5,'#8b5cf6');gradient.addColorStop(1,'#ec4899');
+  ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(centerX,centerY,3*CELL_SIZE,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.font='bold 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('HOME',centerX,centerY);
+}
+
+function drawTokens(){
+  if(!gameState)return;
+  gameState.players.forEach(player=>{
+    player.tokens.forEach((token,i)=>{
+      const pos=getTokenPosition(player.color,i,token);
+      if(pos){
+        ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();
+        ctx.arc(pos.x+2,pos.y+2,TOKEN_SIZE/2,0,Math.PI*2);ctx.fill();
+        const gradient=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,TOKEN_SIZE/2);
+        gradient.addColorStop(0,COLOR_HEX[player.color]);
+        gradient.addColorStop(1,COLOR_HEX[player.color]+'CC');
+        ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(pos.x,pos.y,TOKEN_SIZE/2,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='white';ctx.lineWidth=3;ctx.stroke();
+        ctx.fillStyle='white';ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(i+1,pos.x,pos.y);
+        if(selectedToken && selectedToken.player_id===player.player_id && selectedToken.token_index===i){
+          ctx.strokeStyle='#3b82f6';ctx.lineWidth=4;ctx.setLineDash([5,5]);
+          ctx.beginPath();ctx.arc(pos.x,pos.y,TOKEN_SIZE/2+5,0,Math.PI*2);ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        if(token.is_finished){
+          ctx.fillStyle='#fbbf24';ctx.font='bold 16px Arial';
+          ctx.fillText('👑',pos.x,pos.y-TOKEN_SIZE/2-5);
+        }
+      }
+    });
+  });
+}
+
+function getTokenPosition(color,tokenIndex,token){
+  if(token.is_finished)return null;
+  if(token.position===-1 && token.home_path_position===-1){
+    const homePos=HOME_BASES[color][tokenIndex];
+    return {x:homePos[0]*CELL_SIZE+CELL_SIZE/2,y:homePos[1]*CELL_SIZE+CELL_SIZE/2};
+  }
+  if(token.home_path_position>=0){
+    const homePos=HOME_PATHS[color][token.home_path_position];
+    return {x:homePos[0]*CELL_SIZE+CELL_SIZE/2,y:homePos[1]*CELL_SIZE+CELL_SIZE/2};
+  }
+  if(token.position>=0){
+    const pathPos=MAIN_PATH[token.position];
+    return {x:pathPos[0]*CELL_SIZE+CELL_SIZE/2,y:pathPos[1]*CELL_SIZE+CELL_SIZE/2};
+  }
+  return null;
+}
+
+// ========== GAME LOGIC ==========
+async function createOrJoinGame(){
+  playerName=currentUser.username;
+  const gameMode=document.getElementById('gameMode').value;
+  const betAmount=parseInt(document.getElementById('betAmount').value)||0;
+  const aiDifficulty=document.getElementById('aiDifficulty').value;
+  const roomCode=document.getElementById('roomCode').value;
+
+  try{
+    if(gameMode==='private'&&roomCode){
+      const res=await fetch(`/api/join_room/${roomCode}?password=`,{method:'POST'});
+      const data=await res.json();
+      if(data.error){alert(data.error);return;}
+      gameId=roomCode;
+    }else{
+      const res=await fetch(`/api/create_game?bet_amount=${betAmount}&user_id=${currentUser.user_id}`,{method:'POST'});
+      const data=await res.json();
+      if(data.error){alert(data.error);return;}
+      gameId=data.game_id;
+      if(gameMode==='multiplayer'){
+        alert('Game created! Room ID: '+gameId+'\nShare this with friends');
+      }
+    }
+
+    const res=await fetch(`/api/join_game/${gameId}?player_name=${encodeURIComponent(playerName)}&user_id=${currentUser.user_id}&is_ai=${gameMode==='ai'}&ai_difficulty=${aiDifficulty}`,{method:'POST'});
+    const data=await res.json();
+    if(data.error){alert(data.error);return;}
+
+    playerId=data.player_id;
+    playerColor=data.color;
+
+    document.getElementById('setupSection').style.display='none';
+    document.getElementById('gameSection').style.display='block';
+    connectWebSocket();
+    initChat();
+  }catch(e){alert('Connection error. Please try again.');}
+}
+
+function connectWebSocket(){
+  const protocol=location.protocol==='https:'?'wss':'ws';
+  socket=new WebSocket(`${protocol}://${location.host}/ws/${gameId}/${playerId}`);
+  socket.onmessage=(event)=>{
+    const data=JSON.parse(event.data);
+    if(data.state){
+      gameState=data.state;
+      updateGameUI();
+      drawBoard();
+    }
+    if(data.type==='dice_rolled' && data.dice_value){
+      if(soundEnabled)sounds.roll();
+      animateDice(data.dice_value);
+    }
+    if(data.type==='token_moved'){
+      if(data.success && soundEnabled)sounds.move();
+      if(!data.success) alert(data.message || "Invalid move");
+    }
+    if(data.type==='error'){
+      alert(data.message);
+      document.getElementById('rollBtn').disabled=false; // Re-enable roll on error
+    }
+  };
+
+  socket.onclose=()=>{alert('Disconnected from game server');location.reload();};
+}
+
+function initChat(){
+  const protocol=location.protocol==='https:'?'wss':'ws';
+  chatSocket=new WebSocket(`${protocol}://${location.host}/ws/chat/${gameId}`);
+  chatSocket.onmessage=(e)=>{
+    const data=JSON.parse(e.data);
+    if(data.type==='chat_message'){
+      const chatDiv=document.getElementById('chatMessages');
+      chatDiv.innerHTML+=`<div style="margin-bottom:8px;"><strong style="color:var(--primary);">${data.chat.player}:</strong> ${data.chat.message}<span style="color:var(--text-muted);font-size:11px;margin-left:8px;">${data.chat.timestamp}</span></div>`;
+      chatDiv.scrollTop=chatDiv.scrollHeight;
+    }
+  };
+}
+
+function sendChat(){
+  const input=document.getElementById('chatInput');
+  if(input.value.trim()&&chatSocket){
+    chatSocket.send(JSON.stringify({player:playerName,message:input.value.trim()}));
+    input.value='';
+  }
+}
+document.getElementById('chatInput')?.addEventListener('keypress',(e)=>{if(e.key==='Enter')sendChat();});
+
+function rollDice(){
+  if(!socket ||!gameState || gameState.current_player!==playerId)return;
+  socket.send(JSON.stringify({action:'roll_dice'}));
+  document.getElementById('rollBtn').disabled=true;
+  initAudio();
+}
+
+function animateDice(value){
+  const dice=document.getElementById('dice');
+  dice.classList.add('rolling');
+  setTimeout(()=>{dice.classList.remove('rolling');dice.textContent=value;},600);
+}
+
+function handleCanvasClick(e){
+  if(!gameState || gameState.current_player!==playerId || isAnimating || gameState.dice_value===0){
+    console.log("Can't move: not your turn or dice not rolled");
+    return;
+  }
+
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;const y=e.clientY-rect.top;
+  const clickedToken=findClickedToken(x,y);
+
+  if(clickedToken && clickedToken.player_id===playerId){
+    selectToken(clickedToken.token_index);
+  }
+}
+
+function selectToken(tid){
+  const player=gameState.players.find(p=>p.player_id===playerId);
+  if(!player)return;
+
+  const movableTokens=getMovableTokens(player);
+  if(!movableTokens.includes(tid)){
+    alert("This token can't move with dice value "+gameState.dice_value);
+    return;
+  }
+
+  selectedToken={token_index:tid};
+  drawBoard();
+  moveSelectedToken(); // AUTO MOVE immediately after selection
+}
+
+function moveSelectedToken(){
+  if(!selectedToken ||!socket)return;
+  socket.send(JSON.stringify({action:'move_token',token_index:selectedToken.token_index}));
+  selectedToken=null;isAnimating=true;
+  setTimeout(()=>{isAnimating=false;},400);
+}
+
+function getMovableTokens(player){
+  if(!gameState || gameState.dice_value===0)return[];
+  return player.tokens.map((token,i)=>i).filter(i=>{
+    const token=player.tokens[i];
+    if(token.is_finished)return false;
+    if(token.position===-1 && token.home_path_position===-1)return gameState.dice_value===6; // Must roll 6 to exit home
+    if(token.home_path_position>=0)return token.home_path_position+gameState.dice_value<=6; // Max 6 steps in home path
+    return token.position+gameState.dice_value<58; // Can't overshoot home
+  });
+}
+function findClickedToken(x,y){
+  if(!gameState)return null;
+  for(let player of gameState.players){
+    for(let i=0;i<player.tokens.length;i++){
+      const token=player.tokens[i];
+      const pos=getTokenPosition(player.color,i,token);
+      if(pos){
+        const distance=Math.sqrt((x-pos.x)**2+(y-pos.y)**2);
+        if(distance<=TOKEN_SIZE/2+5){
+          return {player_id:player.player_id,token_index:i};
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function selectToken(pid,tid){
+  if(pid!==playerId)return;
+  const player=gameState.players.find(p=>p.player_id===pid);
+  if(!player)return;
+  const movableTokens=getMovableTokens(player);
+  if(!movableTokens.includes(tid))return;
+
+  selectedToken={player_id:pid,token_index:tid};
+  drawBoard();
+}
+
+function moveSelectedToken(){
+  if(!selectedToken ||!socket || gameState.current_player!==playerId)return;
+  socket.send(JSON.stringify({action:'move_token',token_index:selectedToken.token_index}));
+  selectedToken=null;isAnimating=true;
+  setTimeout(()=>{isAnimating=false;},500);
+}
+
+function getMovableTokens(player){
+  if(!gameState)return[];
+  return player.tokens.map((token,i)=>i).filter(i=>{
+    const token=player.tokens[i];
+    if(token.is_finished)return false;
+    if(token.position===-1 && token.home_path_position===-1)return gameState.dice_value===6;
+    if(token.home_path_position>=0)return token.home_path_position+gameState.dice_value<=6;
+    return token.position+gameState.dice_value<=58;
+  });
+}
+
+// ========== UI UPDATES ==========
+function updateGameUI(){
+  if(!gameState)return;
+
+  const currentPlayer=gameState.players.find(p=>p.player_id===gameState.current_player);
+  if(currentPlayer){
+    document.getElementById('playerTurn').className=`player-turn ${currentPlayer.color}`;
+    document.getElementById('playerTurn').textContent=currentPlayer.player_id===playerId
+     ? `YOUR TURN - ${currentPlayer.color.toUpperCase()}`
+      : `${currentPlayer.player_name.toUpperCase()}'S TURN`;
+  }
+
+  // ROLL BUTTON LOGIC - THIS WAS THE BUG
+  const isMyTurn = gameState.current_player===playerId;
+  const diceRolled = gameState.dice_value!==0;
+  document.getElementById('rollBtn').disabled =!isMyTurn || diceRolled;
+  document.getElementById('rollBtn').textContent = diceRolled? `Dice: ${gameState.dice_value}` : '🎲 ROLL DICE';
+
+  // Update player list
+  document.getElementById('playerList').innerHTML=gameState.players.map(p=>`
+    <div class="player-card ${p.player_id===gameState.current_player?'active':''}">
+      <div class="player-header">
+        <div class="player-name" style="color:${COLOR_HEX[p.color]};">${p.player_name}</div>
+        <div class="player-color-dot" style="background:${COLOR_HEX[p.color]};"></div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Finished: ${p.finished_tokens}/4</div>
+      <div class="player-tokens">
+        ${p.tokens.map(t=>`<div class="mini-token" style="background:${t.is_finished?'#fbbf24':COLOR_HEX[p.color]};"></div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // Win condition
+  if(gameState.game_state==='finished'){
+    const winner=gameState.players.find(p=>p.player_id===gameState.winner);
+    document.getElementById('winnerName').textContent=`${winner.player_name} WINS!`;
+    document.getElementById('winnerName').style.color=COLOR_HEX[winner.color];
+    if(gameState.bet_amount>0 && gameState.winner===playerId){
+      document.getElementById('winMessage').textContent=`You won ${gameState.bet_amount * gameState.players.length} coins!`;
+    }
+    document.getElementById('winModal').classList.add('active');
+    if(soundEnabled)sounds.win();
+    updateWalletUI();
+  }
+}
+
+function updateWalletUI(){
+  if(currentUser){
+    fetch(`/api/wallet/${currentUser.user_id}`)
+     .then(res=>res.json())
+     .then(data=>{document.getElementById('coinBalance').textContent=data.coins;});
+  }
+}
+
+async function loadWalletHistory(){
+  const res=await fetch(`/api/wallet/${currentUser.user_id}`);
+  const data=await res.json();
+  document.getElementById('transactionHistory').innerHTML=data.transactions.length===0?'<div style="color:var(--text-muted);padding:30px;text-align:center;">No transactions yet</div>':
+  data.transactions.map(t=>`
+    <div style="display:flex;justify-content:space-between;padding:15px;border-bottom:1px solid var(--border);align-items:center;">
+      <div>
+        <div style="font-weight:600;">${t.description}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${new Date(t.timestamp).toLocaleString()}</div>
+      </div>
+      <div style="font-weight:800;color:${t.amount>0?'var(--green)':'var(--red)'};">${t.amount>0?'+':''}${t.amount} 🪙</div>
+    </div>
+  `).join('');
+}
+
+async function refreshAdminStats(){
+  const res=await fetch('/api/admin/stats');
+  const data=await res.json();
+  document.getElementById('totalUsers').textContent=data.total_users;
+  document.getElementById('gamesToday').textContent=data.games_today;
+  document.getElementById('revenueToday').textContent=data.revenue_today;
+  document.getElementById('activeGames').textContent=data.active_games;
+}
+
+async function claimDailyReward(){
+  const res=await fetch(`/api/daily_reward/${currentUser.user_id}`,{method:'POST'});
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  document.getElementById('rewardText').textContent=`You got ${data.coins} coins!`;
+  document.getElementById('streakText').textContent=`Day ${data.streak} Streak`;
+  document.getElementById('dailyRewardModal').classList.add('active');
+  updateWalletUI();
+}
+
+async function showLeaderboard(){
+  try{
+    const res=await fetch('/api/leaderboard');
+    const data=await res.json();
+    document.getElementById('leaderboardList').innerHTML=data.leaderboard.length===0?'<div style="color:var(--text-muted);padding:30px;">No games played yet</div>':
+    data.leaderboard.map((p,i)=>`
+      <div style="display:flex;justify-content:space-between;padding:15px;border-bottom:1px solid var(--border);align-items:center;">
+        <span style="font-weight:700;">#${i+1} ${p.name}</span>
+        <span style="color:var(--primary);font-weight:700;">${p.wins}W / ${p.games}G</span>
+      </div>
+    `).join('');
+    document.getElementById('leaderboardModal').classList.add('active');
+  }catch(e){alert('Failed to load leaderboard');}
+}
+
+async function watchReplay(){
+  if(!gameId)return;
+  const res=await fetch(`/api/replay/${gameId}`);
+  const data=await res.json();
+  let moveIndex=0;
+  alert('Starting replay... Check console for moves');
+  const replayInterval=setInterval(()=>{
+    if(moveIndex>=data.moves.length){clearInterval(replayInterval);alert('Replay finished');return;}
+    const move=data.moves[moveIndex];
+    console.log(`Move ${moveIndex+1}:`,move);
+    moveIndex++;
+  },1000);
+}
+
+function resetGame(){location.reload();}
+function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇';if(soundEnabled)initAudio();}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space' && gameState && gameState.current_player===playerId && gameState.dice_value===0){
+    e.preventDefault();rollDice();
+  }
+});
+</script>
+</body>
+</html>
