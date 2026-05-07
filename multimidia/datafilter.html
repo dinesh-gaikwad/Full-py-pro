@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Text Editor & Cleaner Pro</title>
+<style>
+  :root{
+    --bg:#0f172a;--panel:#1e293b;--panel2:#334155;--text:#f8fafc;--accent:#22d3ee;--success:#4ade80;--warning:#fbbf24;--danger:#f87171;--border:#475569
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1e293b,#0f172a);color:var(--text);font-family:'Segoe UI',sans-serif;padding:20px}
+
+.editor-container{width:100%;max-width:1200px;background:var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,0.4);overflow:hidden;display:flex;flex-direction:column}
+.header{padding:20px 30px;background:linear-gradient(135deg,#0ea5e9,#06b6d4);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:1.4rem;font-weight:600;display:flex;align-items:center;gap:10px}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.tool-btn{padding:8px 14px;border-radius:10px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;font-size:0.85rem;transition:0.2s;display:flex;align-items:center;gap:6px}
+.tool-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-2px)}
+
+.main-content{display:grid;grid-template-columns:2fr 1fr;gap:0;flex:1;min-height:0}
+  @media(max-width:1000px){.main-content{grid-template-columns:1fr}}
+
+.editor-panel{padding:30px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--border);overflow:hidden}
+  textarea{flex:1;width:100%;padding:20px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;font-size:1rem;line-height:1.8;font-family:'Courier New',monospace;resize:none}
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(34,211,238,0.2)}
+
+.sidebar{padding:30px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;background:var(--panel2)}
+.stat-card{background:var(--bg);padding:16px;border-radius:12px;border:1px solid var(--border)}
+.stat-card h3{font-size:0.8rem;opacity:0.7;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.stat-value{font-size:2rem;font-weight:600;color:var(--accent)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.issue-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+.issue-item{padding:12px;background:var(--bg);border-radius:8px;border-left:4px solid var(--warning);font-size:0.85rem}
+.issue-item.spelling{border-left-color:var(--danger)}
+.issue-item.space{border-left-color:var(--accent)}
+.issue-item.punct{border-left-color:var(--success)}
+.issue-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.fix-btn{padding:4px 10px;border:none;border-radius:6px;background:var(--accent);color:#000;cursor:pointer;font-size:0.75rem;font-weight:600}
+.fix-btn:hover{transform:scale(1.05)}
+
+.actions{display:flex;gap:12px;padding:20px 30px;background:var(--panel2);border-top:1px solid var(--border);flex-wrap:wrap}
+  button.primary{padding:12px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),#06b6d4);color:#000;cursor:pointer;font-weight:600;font-size:0.95rem;transition:0.2s}
+  button.primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(34,211,238,0.4)}
+  button.primary:disabled{opacity:0.5;cursor:not-allowed}
+  button.secondary{padding:12px 24px;border:none;border-radius:12px;background:var(--panel);border:1px solid var(--border);color:var(--text);cursor:pointer;font-weight:600;font-size:0.95rem;transition:0.2s}
+  button.secondary:hover{background:var(--bg)}
+
+.status-bar{padding:12px 30px;background:var(--panel);border-top:1px solid var(--border);font-size:0.85rem;display:flex;justify-content:space-between;align-items:center}
+.status-text{opacity:0.8}.error{color:var(--danger)}.success{color:var(--success)}.warning{color:var(--warning)}
+
+.word-limit{font-weight:600}.word-limit.exceeded{color:var(--danger)}
+.highlight{background:rgba(251,191,36,0.3);padding:2px 4px;border-radius:4px}
+.spinner{width:18px;height:18px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="editor-container">
+  <div class="header">
+    <h1>✍️ Smart Text Editor & Cleaner Pro</h1>
+    <div class="toolbar">
+      <button class="tool-btn" onclick="undo()">↶ Undo</button>
+      <button class="tool-btn" onclick="redo()">↷ Redo</button>
+      <button class="tool-btn" onclick="toggleDarkMode()">🌓 Theme</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Editor Panel -->
+    <div class="editor-panel">
+      <textarea id="textEditor" placeholder="Paste or type your text here... Maximum 3000 words limit"></textarea>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div class="stat-card" style="flex:1">
+          <h3>Word Count</h3>
+          <div class="stat-value" id="wordCount">0</div>
+          <div style="font-size:0.8rem;opacity:0.6">/ 3000 words</div>
+        </div>
+        <div class="stat-card" style="flex:1">
+          <h3>Characters</h3>
+          <div class="stat-value" id="charCount">0</div>
+        </div>
+        <div class="stat-card" style="flex:1">
+          <h3>Reading Time</h3>
+          <div class="stat-value" id="readingTime">0</div>
+          <div style="font-size:0.8rem;opacity:0.6">min</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issues Sidebar -->
+    <div class="sidebar">
+      <div class="stat-card">
+        <h3>Issues Found</h3>
+        <div class="stat-value" id="issueCount">0</div>
+      </div>
+
+      <div class="stat-card">
+        <h3>Detected Issues</h3>
+        <div class="issue-list" id="issueList">
+          <div style="opacity:0.5;text-align:center;padding:20px">No issues detected</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h3>Writing Stats</h3>
+        <div class="stat-grid">
+          <div>
+            <div style="font-size:0.75rem;opacity:0.6">Sentences</div>
+            <div style="font-size:1.5rem;font-weight:600" id="sentenceCount">0</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;opacity:0.6">Paragraphs</div>
+            <div style="font-size:1.5rem;font-weight:600" id="paragraphCount">0</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;opacity:0.6">Avg Word Length</div>
+            <div style="font-size:1.5rem;font-weight:600" id="avgWordLength">0</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;opacity:0.6">Readability</div>
+            <div style="font-size:1.5rem;font-weight:600" id="readability">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" onclick="cleanText()">🧹 Clean Text</button>
+    <button class="primary" onclick="checkSpelling()">🔍 Check Spelling</button>
+    <button class="secondary" onclick="copyCleaned()">📋 Copy Cleaned</button>
+    <button class="secondary" onclick="exportText()">💾 Export.TXT</button>
+    <button class="secondary" onclick="clearAll()">🗑️ Clear All</button>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-text" id="statusText">Ready</div>
+    <div class="spinner" id="spinner"></div>
+  </div>
+</div>
+
+<script>
+// ============ STATE MANAGEMENT ============
+const state={
+  text:'',
+  wordCount:0,
+  issues:[],
+  history:[],
+  historyIndex:-1,
+  maxWords:3000,
+  darkMode:true
+};
+
+const textarea=document.getElementById('textEditor');
+const wordCountEl=document.getElementById('wordCount');
+const charCountEl=document.getElementById('charCount');
+const readingTimeEl=document.getElementById('readingTime');
+const sentenceCountEl=document.getElementById('sentenceCount');
+const paragraphCountEl=document.getElementById('paragraphCount');
+const avgWordLengthEl=document.getElementById('avgWordLength');
+const readabilityEl=document.getElementById('readability');
+const issueCountEl=document.getElementById('issueCount');
+const issueListEl=document.getElementById('issueList');
+
+// ============ COMMON MISSPELLINGS DICTIONARY ============
+const spellingDict={
+  'recieve':'receive','seperate':'separate','definately':'definitely','occured':'occurred',
+  'acommodate':'accommodate','adress':'address','begining':'beginning','believe':'believe',
+  'calender':'calendar','cemetary':'cemetery','collegue':'colleague','congradulations':'congratulations',
+  'enviroment':'environment','existance':'existence','governement':'government','maintainance':'maintenance',
+  'neccessary':'necessary','occassion':'occasion','privilage':'privilege','recommend':'recommend',
+  'responsible':'responsible','successful':'successful','tomorrow':'tomorrow','until':'until',
+  'wierd':'weird','yesterday':'yesterday','wich':'which','teh':'the','adn':'and'
+};
+
+// ============ TEXT ANALYSIS ============
+function analyzeText(){
+  const text=textarea.value;
+  state.text=text;
+
+  // Word count - split by whitespace and filter empty
+  const words=text.trim().split(/\s+/).filter(w=>w.length>0);
+  state.wordCount=words.length;
+  wordCountEl.textContent=words.length;
+  wordCountEl.classList.toggle('exceeded',words.length>state.maxWords);
+
+  // Character count
+  charCountEl.textContent=text.length;
+
+  // Reading time - average 200 words per minute
+  readingTimeEl.textContent=Math.max(1,Math.ceil(words.length/200));
+
+  // Sentence count
+  const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>0);
+  sentenceCountEl.textContent=sentences.length;
+
+  // Paragraph count
+  const paragraphs=text.split(/\n\s*\n/).filter(p=>p.trim().length>0);
+  paragraphCountEl.textContent=paragraphs.length;
+
+  // Average word length
+  const totalLength=words.reduce((sum,word)=>sum+word.length,0);
+  avgWordLengthEl.textContent=words.length>0?(totalLength/words.length).toFixed(1):'0';
+
+  // Readability score - simplified Flesch-Kincaid
+  if(words.length>0&&sentences.length>0){
+    const avgWordsPerSentence=words.length/sentences.length;
+    const avgSyllablesPerWord=estimateSyllables(words)/words.length;
+    const score=206.835-1.015*avgWordsPerSentence-84.6*avgSyllablesPerWord;
+    readabilityEl.textContent=score>80?'Easy':score>60?'Medium':score>40?'Hard':'Very Hard';
+  }else{readabilityEl.textContent='-'}
+
+  // Word limit enforcement
+  if(words.length>state.maxWords){
+    updateStatus(`Word limit exceeded! ${words.length}/${state.maxWords}`,'error');
+  }else{
+    updateStatus('Word count within limit','success');
+  }
+
+  // Detect issues
+  detectIssues(text,words);
+}
+
+function estimateSyllables(words){
+  return words.reduce((count,word)=>{
+    word=word.toLowerCase().replace(/[^a-z]/g,'');
+    if(word.length<=3)return 1;
+    const matches=word.match(/[aeiouy]+/g);
+    return count+(matches?matches.length:1);
+  },0);
+}
+
+// ============ ISSUE DETECTION ============
+function detectIssues(text,words){
+  state.issues=[];
+
+  // 1. Extra spaces detection
+  const extraSpaces=text.match(/\s{2,}/g);
+  if(extraSpaces){state.issues.push({type:'space',count:extraSpaces.length,message:`${extraSpaces.length} instance(s) of multiple spaces found`,fix:'Replace with single space'})}
+
+  // 2. Leading/trailing spaces
+  if(text!==text.trim()){state.issues.push({type:'space',count:1,message:'Leading or trailing whitespace detected',fix:'Trim whitespace'})}
+
+  // 3. Spelling mistakes
+  const spellingIssues=[];
+  words.forEach(word=>{
+    const cleanWord=word.toLowerCase().replace(/[^a-z]/g,'');
+    if(spellingDict[cleanWord]){spellingIssues.push({word:word,correct:spellingDict[cleanWord]})}
+  });
+  if(spellingIssues.length>0){state.issues.push({type:'spelling',count:spellingIssues.length,message:`${spellingIssues.length} spelling mistake(s) found`,fix:'Apply corrections',details:spellingIssues})}
+
+  // 4. Punctuation issues
+  const punctuationIssues=[];
+  if(text.match(/\s+[.,!?;:]/g)){punctuationIssues.push('Space before punctuation')}
+  if(text.match(/[.,!?;:]{2,}/g)){punctuationIssues.push('Multiple consecutive punctuation')}
+  if(text.match(/\s{1,}[.,!?;:]\s{1,}/g)){punctuationIssues.push('Incorrect punctuation spacing')}
+  if(punctuationIssues.length>0){state.issues.push({type:'punct',count:punctuationIssues.length,message:punctuationIssues.join(', '),fix:'Fix punctuation formatting'})}
+
+  // 5. Capitalization issues
+  if(text.match(/^[a-z]/)){state.issues.push({type:'capital',count:1,message:'Text should start with capital letter',fix:'Capitalize first letter'})}
+
+  renderIssues();
+}
+
+function renderIssues(){
+  issueCountEl.textContent=state.issues.length;
+  if(state.issues.length===0){
+    issueListEl.innerHTML='<div style="opacity:0.5;text-align:center;padding:20px">✓ No issues detected</div>';
+    return;
+  }
+
+  issueListEl.innerHTML=state.issues.map((issue,i)=>`
+    <div class="issue-item ${issue.type}">
+      <div class="issue-header">
+        <strong>${issue.message}</strong>
+        <button class="fix-btn" onclick="fixIssue(${i})">Fix</button>
+      </div>
+      <div style="opacity:0.7;font-size:0.8rem">${issue.fix}</div>
+      ${issue.details?`<div style="margin-top:6px;font-size:0.75rem;opacity:0.6">${issue.details.slice(0,3).map(d=>`${d.word} → ${d.correct}`).join(', ')}</div>`:''}
+    </div>
+  `).join('');
+}
+
+// ============ TEXT CLEANING ============
+function cleanText(){
+  if(!state.text){updateStatus('No text to clean','error');return}
+  saveToHistory();
+
+  let cleaned=state.text;
+
+  // 1. Trim leading/trailing whitespace
+  cleaned=cleaned.trim();
+
+  // 2. Replace multiple spaces with single space
+  cleaned=cleaned.replace(/\s{2,}/g,' ');
+
+  // 3. Fix punctuation spacing - no space before, single space after
+  cleaned=cleaned.replace(/\s+([.,!?;:])/g,'$1');
+  cleaned=cleaned.replace(/([.,!?;:])\s*/g,'$1 ');
+  cleaned=cleaned.replace(/\s+$/g,'');
+
+  // 4. Fix multiple newlines - max 2 consecutive
+  cleaned=cleaned.replace(/\n{3,}/g,'\n\n');
+
+  // 5. Capitalize first letter of sentences
+  cleaned=cleaned.replace(/(^|[.!?]\s+)([a-z])/g,(match,p1,p2)=>p1+p2.toUpperCase());
+
+  // 6. Capitalize first letter of text
+  cleaned=cleaned.charAt(0).toUpperCase()+cleaned.slice(1);
+
+  textarea.value=cleaned;
+  analyzeText();
+  updateStatus('Text cleaned successfully!','success');
+}
+
+// ============ SPELLING CORRECTION ============
+function checkSpelling(){
+  if(!state.text){updateStatus('No text to check','error');return}
+  saveToHistory();
+
+  let corrected=state.text;
+  let correctionCount=0;
+
+  Object.keys(spellingDict).forEach(misspelled=>{
+    const regex=new RegExp(`\\b${misspelled}\\b`,'gi');
+    const matches=corrected.match(regex);
+    if(matches){
+      correctionCount+=matches.length;
+      corrected=corrected.replace(regex,spellingDict[misspelled]);
+    }
+  });
+
+  textarea.value=corrected;
+  analyzeText();
+  updateStatus(correctionCount>0?`Fixed ${correctionCount} spelling mistake(s)`:'No spelling mistakes found',correctionCount>0?'success':'warning');
+}
+
+// ============ ISSUE FIXING ============
+function fixIssue(index){
+  const issue=state.issues[index];
+  saveToHistory();
+  let cleaned=state.text;
+
+  switch(issue.type){
+    case 'space':
+      cleaned=cleaned.trim().replace(/\s{2,}/g,' ');
+      break;
+    case 'spelling':
+      if(issue.details){
+        issue.details.forEach(d=>{
+          const regex=new RegExp(`\\b${d.word}\\b`,'g');
+          cleaned=cleaned.replace(regex,d.correct);
+        });
+      }
+      break;
+    case 'punct':
+      cleaned=cleaned.replace(/\s+([.,!?;:])/g,'$1').replace(/([.,!?;:])\s*/g,'$1 ');
+      break;
+    case 'capital':
+      cleaned=cleaned.charAt(0).toUpperCase()+cleaned.slice(1);
+      break;
+  }
+
+  textarea.value=cleaned;
+  analyzeText();
+  updateStatus('Issue fixed!','success');
+}
+
+// ============ HISTORY MANAGEMENT ============
+function saveToHistory(){
+  state.history=state.history.slice(0,state.historyIndex+1);
+  state.history.push(state.text);
+  state.historyIndex=state.history.length-1;
+  if(state.history.length>50)state.history.shift();
+}
+
+function undo(){
+  if(state.historyIndex>0){
+    state.historyIndex--;
+    textarea.value=state.history[state.historyIndex];
+    analyzeText();
+    updateStatus('Undone');
+  }
+}
+
+function redo(){
+  if(state.historyIndex<state.history.length-1){
+    state.historyIndex++;
+    textarea.value=state.history[state.historyIndex];
+    analyzeText();
+    updateStatus('Redone');
+  }
+}
+
+// ============ EXPORT & COPY ============
+async function copyCleaned(){
+  if(!textarea.value){updateStatus('No text to copy','error');return}
+  try{
+    await navigator.clipboard.writeText(textarea.value);
+    updateStatus('Copied to clipboard','success');
+  }catch(e){updateStatus('Copy failed','error')}
+}
+
+function exportText(){
+  if(!textarea.value){updateStatus('No text to export','error');return}
+  const blob=new Blob([textarea.value],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='cleaned-text-'+new Date().toISOString().slice(0,10)+'.txt';a.click();
+  URL.revokeObjectURL(url);
+  updateStatus('File exported successfully','success');
+}
+
+function clearAll(){
+  if(confirm('Are you sure you want to clear all text?')){
+    textarea.value='';state.text='';state.issues=[];
+    analyzeText();updateStatus('Cleared');
+  }
+}
+
+// ============ THEME TOGGLE ============
+function toggleDarkMode(){
+  state.darkMode=!state.darkMode;
+  document.body.style.background=state.darkMode?'radial-gradient(ellipse at center,#1e293b,#0f172a)':'radial-gradient(ellipse at center,#e0f2fe,#f8fafc)';
+  document.body.style.color=state.darkMode?'#f8fafc':'#0f172a';
+}
+
+// ============ STATUS & LOADING ============
+function setLoading(isLoading){document.getElementById('spinner').style.display=isLoading?'block':'none'}
+function updateStatus(msg,type=''){const el=document.getElementById('statusText');el.textContent=msg;el.className='status-text '+type}
+
+// ============ EVENT LISTENERS ============
+textarea.addEventListener('input',(e)=>{
+  const words=e.target.value.trim().split(/\s+/).filter(w=>w.length>0);
+  if(words.length>state.maxWords){
+    e.target.value=e.target.value.trim().split(/\s+/).slice(0,state.maxWords).join(' ');
+    updateStatus(`Word limit of ${state.maxWords} reached`,'warning');
+  }
+  analyzeText();
+  saveToHistory();
+});
+
+// Auto-save to localStorage
+setInterval(()=>{
+  try{localStorage.setItem('smartTextEditor',textarea.value)}catch(e){}
+},5000);
+
+// Load saved text on startup
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('smartTextEditor');
+  if(saved){textarea.value=saved;analyzeText();saveToHistory()}
+});
+
+// ============ KEYBOARD SHORTCUTS ============
+document.addEventListener('keydown',(e)=>{
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo()}
+  if(e.ctrlKey&&e.key==='y'){e.preventDefault();redo()}
+  if(e.ctrlKey&&e.key==='s'){e.preventDefault();exportText()}
+});
+
+// ============ ERROR BOUNDARY ============
+window.addEventListener('error',(e)=>{updateStatus('Error: '+e.message,'error');console.error(e)});
+</script>
+</body>
+</html>

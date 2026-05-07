@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magical Tools Hub</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    font-family: 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+    color: #fff;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3), transparent 50%);
+    animation: float 20s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -30px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+    background: linear-gradient(90deg, #ff9a9e, #fec3a6, #fbc2eb, #a6c1ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 60px;
+    font-size: 1.1rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    perspective: 1000px;
+  }
+
+  .card {
+    position: relative;
+    height: 220px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    transform-style: preserve-3d;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.5s;
+    opacity: 0;
+  }
+
+  .card:hover::before {
+    animation: shine 0.8s;
+    opacity: 1;
+  }
+
+  @keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+  }
+
+  .card:hover {
+    transform: translateY(-15px) rotateX(5deg) scale(1.05);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 30px rgba(168, 237, 255, 0.3);
+    border-color: rgba(168, 237, 255, 0.5);
+  }
+
+  .card-content {
+    position: relative;
+    padding: 30px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 2;
+  }
+
+  .icon {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 10px rgba(168, 237, 255, 0.6));
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .card-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .card-desc {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.4;
+  }
+
+  .card.clicked {
+    animation: teleport 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  @keyframes teleport {
+    0% { transform: scale(1) rotateY(0); opacity: 1; }
+    50% { transform: scale(1.3) rotateY(180deg); opacity: 0.5; }
+    100% { transform: scale(0) rotateY(360deg); opacity: 0; }
+  }
+
+  .particles {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: #a6c1ee;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particle 2s linear infinite;
+  }
+
+  @keyframes particle {
+    0% { opacity: 0; transform: translateY(100%) scale(0); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-100%) scale(1); }
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, #302b63, #0f0c29);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s;
+    z-index: 1000;
+  }
+
+  .overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .loading-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    color: #a6c1ee;
+    animation: glow 1.5s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { text-shadow: 0 0 20px #a6c1ee; }
+    50% { text-shadow: 0 0 40px #a6c1ee, 0 0 60px #a6c1ee; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>✨ Magical Tools Hub ✨</h1>
+    <p class="subtitle">Click any card to enter the dimension</p>
+    
+    <div class="grid" id="cardGrid"></div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="loading-text">Transporting...</div>
+  </div>
+
+<script>
+const tools = [
+  { name: "Data Filter", icon: "🔍", desc: "Filter & sort data instantly", url: "datafilter.html" },
+  { name: "Snake Game", icon: "🐍", desc: "Classic retro snake adventure", url: "snake.html" },
+  { name: "Resume Editor", icon: "📄", desc: "Build professional resumes", url: "resume.html" },
+  { name: "Data Converter", icon: "🔄", desc: "Convert JSON, CSV, XML", url: "converter.html" },
+  { name: "Translator", icon: "🌐", desc: "Multi-language translator", url: "translator.html" },
+  { name: "Ludo", icon: "🎲", desc: "Play ludo with friends", url: "ludo.html" },
+  { name: "Magic Watch", icon: "⌚", desc: "Time tracker with effects", url: "watch.html" },
+  { name: "Magic Card", icon: "🃏", desc: "Card prediction game", url: "magiccard.html" },
+  { name: "Validation", icon: "✅", desc: "Form validation toolkit", url: "validation.html" }
+];
+
+const grid = document.getElementById('cardGrid');
+const overlay = document.getElementById('overlay');
+
+tools.forEach((tool, index) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.animationDelay = `${index * 0.1}s`;
+  
+  card.innerHTML = `
+    <div class="particles"></div>
+    <div class="card-content">
+      <div class="icon">${tool.icon}</div>
+      <div class="card-title">${tool.name}</div>
+      <div class="card-desc">${tool.desc}</div>
+    </div>
+  `;
+
+  // Add floating particles on hover
+  card.addEventListener('mouseenter', () => createParticles(card.querySelector('.particles')));
+  
+  card.addEventListener('click', () => navigateToPage(card, tool.url));
+  grid.appendChild(card);
+});
+
+function createParticles(container) {
+  container.innerHTML = '';
+  for(let i = 0; i < 15; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 2 + 's';
+    particle.style.background = `hsl(${Math.random() * 360}, 70%, 70%)`;
+    container.appendChild(particle);
+  }
+}
+
+function navigateToPage(card, url) {
+  card.classList.add('clicked');
+  overlay.classList.add('active');
+  
+  // Simulate page transition
+  setTimeout(() => {
+    window.location.href = url;
+  }, 800);
+}
+
+// Simple page templates for each tool
+const pageTemplates = {
+  'datafilter.html': '<h1>Data Filter</h1><p>Filter your data with magic</p><button onclick="history.back()">← Back</button>',
+  'snake.html': '<h1>Snake Game</h1><p>Use arrow keys to play</p><button onclick="history.back()">← Back</button>',
+  'resume.html': '<h1>Resume Editor</h1><p>Edit your professional resume</p><button onclick="history.back()">← Back</button>',
+  'converter.html': '<h1>Data Converter</h1><p>Convert between formats</p><button onclick="history.back()">← Back</button>',
+  'translator.html': '<h1>Translator</h1><p>Translate any text</p><button onclick="history.back()">← Back</button>',
+  'ludo.html': '<h1>Ludo Game</h1><p>Roll the dice and play</p><button onclick="history.back()">← Back</button>',
+  'watch.html': '<h1>Magic Watch</h1><p>Time tracking with style</p><button onclick="history.back()">← Back</button>',
+  'magiccard.html': '<h1>Magic Card</h1><p>Pick a card, any card</p><button onclick="history.back()">← Back</button>',
+  'validation.html': '<h1>Validation</h1><p>Validate forms instantly</p><button onclick="history.back()">← Back</button>'
+};
+
+// If you want to create actual pages, this creates them
+function createPlaceholderPages() {
+  Object.keys(pageTemplates).forEach(filename => {
+    if (!window.location.pathname.includes(filename)) return;
+    document.body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63);color:#fff;font-family:Segoe UI;">
+        ${pageTemplates[filename]}
+        <style>button{margin-top:30px;padding:12px 30px;border:none;border-radius:50px;background:linear-gradient(90deg,#ff9a9e,#a6c1ee);color:#fff;font-size:1.1rem;cursor:pointer;transition:0.3s;}button:hover{transform:scale(1.1);box-shadow:0 10px 30px rgba(168,237,255,0.4);}</style>
+      </div>
+    `;
+  });
+}
+createPlaceholderPages();
+</script>
+</body>
+</html>

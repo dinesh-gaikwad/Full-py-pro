@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ludo Game Pro</title>
+<style>
+  :root{
+    --red:#ef4444;--green:#22c55e;--yellow:#facc15;--blue:#3b82f6;--bg:#0f172a;--panel:#1e293b;--text:#f8fafc;--border:#475569
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1e293b,#0f172a);color:var(--text);font-family:'Segoe UI',sans-serif;padding:20px}
+
+.game-container{display:flex;gap:30px;align-items:center;flex-wrap:wrap;justify-content:center}
+  @media(max-width:1100px){.game-container{flex-direction:column}}
+
+  /* Ludo Board */
+.ludo-board{width:600px;height:600px;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.5);display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);gap:1px;padding:10px;position:relative}
+.cell{background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600}
+.cell.safe{background:#f1f5f9}
+.cell.home{border:3px solid}
+.cell.red{background:var(--red);color:#fff}
+.cell.green{background:var(--green);color:#fff}
+.cell.yellow{background:var(--yellow);color:#000}
+.cell.blue{background:var(--blue);color:#fff}
+.cell.path{position:relative}
+
+.pawn{width:70%;height:70%;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;transition:0.3s;position:relative;z-index:10}
+.pawn:hover{transform:scale(1.2);box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+.pawn.red{background:var(--red)}.pawn.green{background:var(--green)}.pawn.yellow{background:var(--yellow)}.pawn.blue{background:var(--blue)}
+.pawn.movable{animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,0.7)}50%{box-shadow:0 0 0 10px rgba(34,211,238,0)}}
+
+  /* Control Panel */
+.control-panel{width:350px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.player-card{padding:16px;border-radius:12px;border:2px solid transparent;transition:0.3s}
+.player-card.active{border-color:var(--accent);box-shadow:0 0 20px rgba(34,211,238,0.3);transform:scale(1.02)}
+.player-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.player-name{font-weight:600;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.player-color{width:20px;height:20px;border-radius:50%;border:2px solid #fff}
+.dice-container{display:flex;gap:12px;align-items:center;justify-content:center;padding:20px;background:var(--bg);border-radius:12px;border:1px solid var(--border)}
+.dice{width:60px;height:60px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#000;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:0.3s}
+.dice.rolling{animation:roll 0.5s ease-in-out}
+  @keyframes roll{0%,100%{transform:rotate(0)}25%{transform:rotate(90deg)}50%{transform:rotate(180deg)}75%{transform:rotate(270deg)}}
+
+  button{padding:12px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),#06b6d4);color:#000;cursor:pointer;font-weight:600;font-size:1rem;transition:0.2s;width:100%}
+  button:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(34,211,238,0.4)}
+  button:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+
+.game-status{padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);text-align:center;font-weight:500}
+.turn-indicator{font-size:0.9rem;opacity:0.7;margin-top:4px}
+.pawn-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem}
+.pawn-stat{display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px}
+
+.winner-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:100}
+.winner-content{background:var(--panel);padding:40px;border-radius:24px;border:2px solid var(--accent);text-align:center;max-width:400px}
+.winner-content h2{font-size:2.5rem;margin-bottom:16px;background:linear-gradient(135deg,var(--accent),#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <!-- Ludo Board -->
+  <div class="ludo-board" id="ludoBoard"></div>
+
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <h2 style="text-align:center;font-size:1.5rem">🎲 Ludo Game Pro</h2>
+
+    <div id="playersPanel"></div>
+
+    <div class="dice-container">
+      <div class="dice" id="dice">1</div>
+    </div>
+
+    <button id="rollBtn" onclick="rollDice()">🎲 Roll Dice</button>
+    <button id="passBtn" onclick="passTurn()" style="display:none;background:var(--panel);border:1px solid var(--border);color:var(--text)">⏭️ Pass Turn</button>
+
+    <div class="game-status" id="gameStatus">Player 1's Turn - Roll the dice!</div>
+  </div>
+</div>
+
+<!-- Winner Modal -->
+<div class="winner-modal" id="winnerModal">
+  <div class="winner-content">
+    <h2 id="winnerText">Player 1 Wins! 🎉</h2>
+    <p style="margin-bottom:24px;opacity:0.8">All 4 pawns reached home!</p>
+    <button onclick="resetGame()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ============ GAME CONFIG ============
+const COLORS=['red','green','yellow','blue'];
+const COLOR_NAMES=['Red','Green','Yellow','Blue'];
+const PLAYER_COUNT=4;
+const PAWNS_PER_PLAYER=4;
+
+// Ludo board path - 52 positions around the board
+const PATH=[
+  // Bottom row right to left
+  {r:12,c:6},{r:12,c:5},{r:12,c:4},{r:12,c:3},{r:12,c:2},{r:12,c:1},
+  // Left column bottom to top
+  {r:11,c:0},{r:10,c:0},{r:9,c:0},{r:8,c:0},{r:7,c:0},{r:6,c:0},
+  // Top row left to right
+  {r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4},{r:5,c:5},{r:5,c:6},
+  // Right column top to bottom
+  {r:4,c:7},{r:3,c:7},{r:2,c:7},{r:1,c:7},{r:0,c:7},{r:0,c:8},
+  // Top row right to left
+  {r:1,c:9},{r:2,c:9},{r:3,c:9},{r:4,c:9},{r:5,c:9},{r:5,c:10},
+  // Right column bottom to top
+  {r:6,c:11},{r:7,c:11},{r:8,c:11},{r:9,c:11},{r:10,c:11},{r:11,c:11},
+  // Bottom row left to right
+  {r:12,c:10},{r:12,c:9},{r:12,c:8},{r:12,c:7},{r:13,c:7},{r:14,c:7}
+];
+
+// Safe positions - stars
+const SAFE_POSITIONS=[0,8,13,21,26,34,39,47];
+
+// Home entry positions for each color
+const HOME_ENTRIES=[51,12,25,38]; // Red, Green, Yellow, Blue
+
+// Home paths for each color
+const HOME_PATHS={
+  red:[{r:11,c:7},{r:10,c:7},{r:9,c:7},{r:8,c:7},{r:7,c:7}],
+  green:[{r:7,c:1},{r:7,c:2},{r:7,c:3},{r:7,c:4},{r:7,c:5}],
+  yellow:[{r:3,c:7},{r:4,c:7},{r:5,c:7},{r:6,c:7},{r:7,c:7}],
+  blue:[{r:7,c:10},{r:7,c:9},{r:7,c:8},{r:7,c:7},{r:7,c:6}]
+};
+
+// Starting positions in home yard
+const START_POSITIONS={
+  red:[{r:13,c:1},{r:13,c:3},{r:14,c:1},{r:14,c:3}],
+  green:[{r:1,c:1},{r:1,c:3},{r:3,c:1},{r:3,c:3}],
+  yellow:[{r:1,c:11},{r:1,c:13},{r:3,c:11},{r:3,c:13}],
+  blue:[{r:13,c:11},{r:13,c:13},{r:14,c:11},{r:14,c:13}]
+};
+
+// ============ GAME STATE ============
+const state={
+  currentPlayer:0,
+  diceValue:1,
+  pawns:[],
+  gameOver:false,
+  canRoll:true
+};
+
+// Initialize pawns
+function initPawns(){
+  state.pawns=[];
+  COLORS.forEach((color,playerIdx)=>{
+    for(let i=0;i<PAWNS_PER_PLAYER;i++){
+      state.pawns.push({
+        id:`${color}-${i}`,
+        player:playerIdx,
+        color:color,
+        position:-1, // -1 = in yard, 0-51 = on path, 52-56 = in home path, 57 = finished
+        inYard:true,
+        inHome:false,
+        finished:false
+      });
+    }
+  });
+}
+initPawns();
+
+// ============ BOARD RENDERING ============
+function renderBoard(){
+  const board=document.getElementById('ludoBoard');
+  board.innerHTML='';
+
+  // Create 15x15 grid
+  for(let r=0;r<15;r++){
+    for(let c=0;c<15;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r;cell.dataset.c=c;
+
+      // Home yards
+      if(r>=11&&c<=4){cell.classList.add('home','red');cell.style.background='var(--red)'}
+      else if(r<=3&&c<=4){cell.classList.add('home','green');cell.style.background='var(--green)'}
+      else if(r<=3&&c>=10){cell.classList.add('home','yellow');cell.style.background='var(--yellow)'}
+      else if(r>=11&&c>=10){cell.classList.add('home','blue');cell.style.background='var(--blue)'}
+      // Center home
+      else if(r>=6&&r<=8&&c>=6&&c<=8){cell.style.background='#f8fafc';cell.style.border='3px solid #334155'}
+      // Paths
+      else if(isPathPosition(r,c)){
+        cell.classList.add('path');
+        const pathIdx=getPathIndex(r,c);
+        if(SAFE_POSITIONS.includes(pathIdx))cell.classList.add('safe');
+        cell.textContent=SAFE_POSITIONS.includes(pathIdx)?'★':'';
+      }
+
+      board.appendChild(cell);
+    }
+  }
+
+  // Render pawns
+  state.pawns.forEach(pawn=>{
+    const pawnEl=document.createElement('div');
+    pawnEl.className=`pawn ${pawn.color}`;
+    pawnEl.dataset.pawnId=pawn.id;
+
+    let cellEl=null;
+    if(pawn.inYard){
+      const startPos=START_POSITIONS[pawn.color][parseInt(pawn.id.split('-')[1])];
+      cellEl=document.querySelector(`[data-r="${startPos.r}"][data-c="${startPos.c}"]`);
+    }else if(pawn.finished){
+      cellEl=document.querySelector(`[data-r="7"][data-c="7"]`);
+    }else if(pawn.inHome){
+      const homePos=HOME_PATHS[pawn.color][pawn.position-52];
+      if(homePos)cellEl=document.querySelector(`[data-r="${homePos.r}"][data-c="${homePos.c}"]`);
+    }else{
+      const pathPos=PATH[pawn.position];
+      if(pathPos)cellEl=document.querySelector(`[data-r="${pathPos.r}"][data-c="${pathPos.c}"]`);
+    }
+
+    if(cellEl){
+      cellEl.appendChild(pawnEl);
+      if(canMovePawn(pawn))pawnEl.classList.add('movable');
+      pawnEl.onclick=()=>movePawn(pawn);
+    }
+  });
+}
+
+function isPathPosition(r,c){
+  return PATH.some(p=>p.r===r&&p.c===c)||
+         HOME_PATHS.red.some(p=>p.r===r&&p.c===c)||
+         HOME_PATHS.green.some(p=>p.r===r&&p.c===c)||
+         HOME_PATHS.yellow.some(p=>p.r===r&&p.c===c)||
+         HOME_PATHS.blue.some(p=>p.r===r&&p.c===c);
+}
+
+function getPathIndex(r,c){
+  return PATH.findIndex(p=>p.r===r&&p.c===c);
+}
+
+// ============ PLAYER PANEL ============
+function renderPlayersPanel(){
+  const panel=document.getElementById('playersPanel');
+  panel.innerHTML=COLORS.map((color,i)=>`
+    <div class="player-card ${i===state.currentPlayer?'active':''}" style="background:${i===state.currentPlayer?`rgba(${getRGB(color)},0.15)`:''}">
+      <div class="player-header">
+        <div class="player-name"><div class="player-color" style="background:var(--${color})"></div>${COLOR_NAMES[i]}</div>
+        <div style="font-size:0.8rem;opacity:0.7">${getFinishedCount(i)}/4</div>
+      </div>
+      <div class="pawn-stats">
+        <div class="pawn-stat"><span>In Yard</span><span>${getYardCount(i)}</span></div>
+        <div class="pawn-stat"><span>On Board</span><span>${getBoardCount(i)}</span></div>
+        <div class="pawn-stat"><span>In Home</span><span>${getHomeCount(i)}</span></div>
+        <div class="pawn-stat"><span>Finished</span><span>${getFinishedCount(i)}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getRGB(color){return color==='red'?'239,68,68':color==='green'?'34,197,94':color==='yellow'?'250,204,21':'59,130,246'}
+function getYardCount(p){return state.pawns.filter(pw=>pw.player===p&&pw.inYard).length}
+function getBoardCount(p){return state.pawns.filter(pw=>pw.player===p&&!pw.inYard&&!pw.inHome&&!pw.finished).length}
+function getHomeCount(p){return state.pawns.filter(pw=>pw.player===p&&pw.inHome).length}
+function getFinishedCount(p){return state.pawns.filter(pw=>pw.player===p&&pw.finished).length}
+
+// ============ DICE ROLL ============
+function rollDice(){
+  if(!state.canRoll||state.gameOver)return;
+  state.canRoll=false;
+
+  const dice=document.getElementById('dice');
+  dice.classList.add('rolling');
+
+  setTimeout(()=>{
+    state.diceValue=Math.floor(Math.random()*6)+1;
+    dice.textContent=state.diceValue;
+    dice.classList.remove('rolling');
+    updateStatus(`${COLOR_NAMES[state.currentPlayer]} rolled ${state.diceValue}`);
+    checkMovablePawns();
+  },500);
+}
+
+function checkMovablePawns(){
+  const movablePawns=getMovablePawns();
+  if(movablePawns.length===0){
+    updateStatus('No valid moves. Passing turn...');
+    document.getElementById('passBtn').style.display='block';
+    setTimeout(passTurn,1500);
+  }else{
+    updateStatus(`Select a pawn to move ${state.diceValue} steps`);
+    document.getElementById('passBtn').style.display='none';
+  }
+  renderBoard();
+}
+
+function getMovablePawns(){
+  return state.pawns.filter(p=>{
+    if(p.player!==state.currentPlayer||p.finished)return false;
+    if(p.inYard)return state.diceValue===6;
+    if(p.inHome)return p.position+state.diceValue<=57;
+    return p.position+state.diceValue<=57;
+  });
+}
+
+// ============ PAWN MOVEMENT ============
+function canMovePawn(pawn){
+  if(pawn.player!==state.currentPlayer||pawn.finished)return false;
+  if(pawn.inYard)return state.diceValue===6;
+  if(pawn.inHome)return pawn.position+state.diceValue<=57;
+  return pawn.position+state.diceValue<=57;
+}
+
+function movePawn(pawn){
+  if(!canMovePawn(pawn)||state.gameOver)return;
+
+  if(pawn.inYard&&state.diceValue===6){
+    pawn.inYard=false;
+    pawn.position=HOME_ENTRIES[pawn.player];
+  }else if(!pawn.inYard){
+    const newPos=pawn.position+state.diceValue;
+
+    // Check if entering home path
+    if(!pawn.inHome&&newPos>51){
+      pawn.inHome=true;
+      pawn.position=newPos;
+    }else if(pawn.inHome&&newPos<=57){
+      pawn.position=newPos;
+      if(newPos===57)pawn.finished=true;
+    }else if(!pawn.inHome&&newPos<=51){
+      pawn.position=newPos;
+      // Check for capture
+      checkCapture(pawn);
+    }
+  }
+
+  renderBoard();
+  checkWin();
+
+  // If dice is 6, player gets another turn
+  if(state.diceValue===6&&!state.gameOver){
+    updateStatus(`${COLOR_NAMES[state.currentPlayer]} rolled 6! Roll again.`);
+    state.canRoll=true;
+    return;
+  }
+
+  setTimeout(passTurn,800);
+}
+
+function checkCapture(movedPawn){
+  state.pawns.forEach(pawn=>{
+    if(pawn.player!==movedPawn.player&&!pawn.inYard&&!pawn.inHome&&!pawn.finished&&pawn.position===movedPawn.position){
+      if(!SAFE_POSITIONS.includes(pawn.position)){
+        pawn.inYard=true;
+        pawn.position=-1;
+        updateStatus(`${COLOR_NAMES[movedPawn.player]} captured ${COLOR_NAMES[pawn.player]}'s pawn!`);
+      }
+    }
+  });
+}
+
+function passTurn(){
+  state.currentPlayer=(state.currentPlayer+1)%PLAYER_COUNT;
+  state.canRoll=true;
+  document.getElementById('passBtn').style.display='none';
+  updateStatus(`${COLOR_NAMES[state.currentPlayer]}'s Turn - Roll the dice!`);
+  renderPlayersPanel();
+  renderBoard();
+}
+
+// ============ WIN CONDITION ============
+function checkWin(){
+  const finishedCount=getFinishedCount(state.currentPlayer);
+  if(finishedCount===PAWNS_PER_PLAYER){
+    state.gameOver=true;
+    document.getElementById('winnerText').textContent=`${COLOR_NAMES[state.currentPlayer]} Wins! 🎉`;
+    document.getElementById('winnerModal').style.display='flex';
+    updateStatus(`${COLOR_NAMES[state.currentPlayer]} WINS!`);
+  }
+}
+
+// ============ GAME STATUS ============
+function updateStatus(msg,type=''){
+  const status=document.getElementById('gameStatus');
+  status.textContent=msg;
+  status.className='game-status '+type;
+}
+
+// ============ RESET GAME ============
+function resetGame(){
+  initPawns();
+  state.currentPlayer=0;state.diceValue=1;state.gameOver=false;state.canRoll=true;
+  document.getElementById('winnerModal').style.display='none';
+  document.getElementById('dice').textContent='1';
+  renderBoard();renderPlayersPanel();updateStatus(`${COLOR_NAMES[0]}'s Turn - Roll the dice!`);
+}
+
+// ============ INITIAL RENDER ============
+renderBoard();renderPlayersPanel();
+</script>
+</body>
+</html>

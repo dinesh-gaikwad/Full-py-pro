@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magical Engagement Invitation Editor Pro</title>
+<style>
+  :root{
+    --bg:#0f172a;--panel:#1e293b;--panel2:#334155;--text:#f8fafc;--accent:#f472b6;--gold:#fbbf24;--border:#475569;--shadow:rgba(0,0,0,0.4)
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{height:100vh;display:flex;background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow:hidden}
+
+  /* Sidebar Editor */
+ .sidebar{width:380px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px;z-index:10}
+ .sidebar h2{font-size:1.2rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+ .section{background:var(--panel2);padding:16px;border-radius:12px;border:1px solid var(--border)}
+ .section h3{font-size:0.9rem;margin-bottom:12px;opacity:0.9;text-transform:uppercase;letter-spacing:1px}
+ .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+ .form-group label{font-size:0.8rem;opacity:0.8}
+ .form-group input,.form-group textarea,.form-group select{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#0f172a;color:var(--text);outline:none;font-family:inherit}
+ .form-group textarea{resize:vertical;min-height:60px}
+ .color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+ .color-swatch{width:100%;aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:0.2s}
+ .color-swatch.active{border-color:var(--text);transform:scale(1.1)}
+ .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+  button{padding:10px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ec4899);color:#fff;cursor:pointer;font-weight:600;transition:0.2s;font-size:0.85rem}
+  button:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(244,114,182,0.4)}
+  button.secondary{background:linear-gradient(135deg,#64748b,#475569)}
+  button.gold{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#000}
+
+  /* Canvas Area */
+ .canvas-area{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1e293b,#0f172a);position:relative;overflow:hidden}
+ .card{
+    width:500px;height:700px;position:relative;background:#fff;border-radius:20px;overflow:hidden;
+    box-shadow:0 30px 80px var(--shadow);transition:0.3s;transform:scale(0.85)
+  }
+ .card-bg{position:absolute;inset:0;background:linear-gradient(135deg,#fdf4ff,#fefce8);z-index:0}
+ .card-border{position:absolute;inset:12px;border:3px solid var(--gold);border-radius:15px;pointer-events:none;z-index:1}
+ .card-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;text-align:center;gap:20px}
+ .ornament{width:120px;height:60px;opacity:0.3}
+ .couple-names{font-size:3rem;font-weight:300;letter-spacing:2px;color:#831843;line-height:1.2}
+ .subtitle{font-size:1.1rem;color:#92400e;letter-spacing:4px;text-transform:uppercase}
+ .date-time{font-size:1.4rem;color:#1e293b;font-weight:500}
+ .venue{font-size:1rem;color:#475569;max-width:80%;line-height:1.6}
+ .message{font-size:0.95rem;color:#64748b;font-style:italic;max-width:85%;line-height:1.7}
+
+  /* Floating Elements */
+ .floating{position:absolute;border-radius:50%;opacity:0.15;animation:float 8s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(180deg)}}
+
+  /* Toolbar */
+ .toolbar{position:absolute;top:20px;right:20px;display:flex;gap:10px;z-index:20}
+ .tool-btn{width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:0.2s;font-size:1.2rem}
+ .tool-btn:hover{background:var(--panel2);transform:translateY(-2px)}
+
+  /* Animations */
+ .animate-fade{animation:fadeIn 1.5s ease-out}
+  @keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+ .animate-glow{animation:glow 3s ease-in-out infinite}
+  @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(251,191,36,0.3)}50%{box-shadow:0 0 40px rgba(251,191,36,0.6)}}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-track{background:var(--panel)}
+  ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:10px}
+
+  /* Responsive */
+  @media(max-width:1024px){.sidebar{width:320px}.card{transform:scale(0.7)}}
+</style>
+</head>
+<body>
+  <!-- Sidebar Editor -->
+  <div class="sidebar">
+    <h2>✨ Engagement Editor Pro</h2>
+
+    <div class="section">
+      <h3>Couple Details</h3>
+      <div class="form-group">
+        <label>Bride Name</label>
+        <input type="text" id="brideName" value="Ananya" oninput="updateCard()">
+      </div>
+      <div class="form-group">
+        <label>Groom Name</label>
+        <input type="text" id="groomName" value="Arjun" oninput="updateCard()">
+      </div>
+      <div class="form-group">
+        <label>Subtitle / Tagline</label>
+        <input type="text" id="subtitle" value="Together Forever" oninput="updateCard()">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Event Details</h3>
+      <div class="form-group">
+        <label>Date & Time</label>
+        <input type="text" id="eventDate" value="Sunday, 14th December 2026 | 6:00 PM" oninput="updateCard()">
+      </div>
+      <div class="form-group">
+        <label>Venue</label>
+        <textarea id="venue" oninput="updateCard()">The Grand Palace Hall, MG Road, Pune, Maharashtra</textarea>
+      </div>
+      <div class="form-group">
+        <label>Personal Message</label>
+        <textarea id="message" oninput="updateCard()">With hearts full of joy, we invite you to celebrate our engagement and witness the beginning of our forever.</textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Design Theme</h3>
+      <div class="form-group">
+        <label>Font Style</label>
+        <select id="fontStyle" onchange="updateCard()">
+          <option value="'Playfair Display', serif">Elegant Serif</option>
+          <option value="'Great Vibes', cursive">Romantic Script</option>
+          <option value="'Montserrat', sans-serif">Modern Sans</option>
+          <option value="'Cinzel', serif">Royal Serif</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Primary Color</label>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+      <div class="form-group">
+        <label>Background Pattern</label>
+        <select id="bgPattern" onchange="updateCard()">
+          <option value="gradient">Soft Gradient</option>
+          <option value="floral">Floral Bloom</option>
+          <option value="geometric">Geometric Gold</option>
+          <option value="watercolor">Watercolor Wash</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Animations & Effects</h3>
+      <div class="btn-row">
+        <button onclick="toggleAnimation('fade')">Fade In</button>
+        <button onclick="toggleAnimation('glow')">Gold Glow</button>
+        <button onclick="toggleAnimation('sparkle')">Sparkles</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Export</h3>
+      <div class="btn-row">
+        <button class="gold" onclick="exportPNG()">📥 Export PNG</button>
+        <button class="secondary" onclick="resetCard()">🔄 Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Area -->
+  <div class="canvas-area">
+    <div class="toolbar">
+      <div class="tool-btn" onclick="zoomCard(0.9)" title="Zoom Out">−</div>
+      <div class="tool-btn" onclick="zoomCard(1.1)" title="Zoom In">+</div>
+      <div class="tool-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</div>
+    </div>
+
+    <div class="card animate-fade" id="invitationCard">
+      <div class="card-bg" id="cardBg"></div>
+      <div class="card-border" id="cardBorder"></div>
+      <div class="floating" style="width:80px;height:80px;background:var(--accent);top:10%;left:10%;animation-delay:0s"></div>
+      <div class="floating" style="width:60px;height:60px;background:var(--gold);bottom:15%;right:12%;animation-delay:2s"></div>
+      <div class="floating" style="width:40px;height:40px;background:#c084fc;top:25%;right:20%;animation-delay:4s"></div>
+
+      <div class="card-content" id="cardContent">
+        <svg class="ornament" viewBox="0 0 120 60" id="topOrnament"></svg>
+        <div class="couple-names" id="coupleNames">Ananya<br>&<br>Arjun</div>
+        <div class="subtitle" id="subtitleText">TOGETHER FOREVER</div>
+        <svg class="ornament" viewBox="0 0 120 60" id="bottomOrnament" style="transform:rotate(180deg)"></svg>
+        <div class="date-time" id="dateTimeText">Sunday, 14th December 2026 | 6:00 PM</div>
+        <div class="venue" id="venueText">The Grand Palace Hall, MG Road, Pune, Maharashtra</div>
+        <div class="message" id="messageText">With hearts full of joy, we invite you to celebrate our engagement and witness the beginning of our forever.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Font Imports -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Montserrat:wght@300;500&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+
+<script>
+// ============ STATE ============
+const state={
+  primaryColor:'#f472b6',
+  bgPattern:'gradient',
+  animations:{fade:true,glow:false,sparkle:false},
+  zoom:0.85
+};
+
+// ============ COLOR PALETTE ============
+const colors=['#f472b6','#ec4899','#c084fc','#a855f7','#fbbf24','#f59e0b','#34d399','#10b981','#60a5fa','#3b82f6','#f87171','#dc2626'];
+const colorGrid=document.getElementById('colorGrid');
+colors.forEach(color=>{
+  const swatch=document.createElement('div');swatch.className='color-swatch';swatch.style.background=color;
+  swatch.onclick=()=>{state.primaryColor=color;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));swatch.classList.add('active');updateCard()};
+  if(color===state.primaryColor)swatch.classList.add('active');
+  colorGrid.appendChild(swatch);
+});
+
+// ============ ORNAMENT SVG ============
+const ornamentSVG=`<path d="M10 30 Q30 10 50 30 T90 30 T110 30" stroke="currentColor" stroke-width="2" fill="none"/><path d="M20 30 Q40 50 60 30 T100 30" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.5"/>`;
+document.getElementById('topOrnament').innerHTML=ornamentSVG;
+document.getElementById('bottomOrnament').innerHTML=ornamentSVG;
+
+// ============ BACKGROUND PATTERNS ============
+const patterns={
+  gradient:`linear-gradient(135deg,#fdf4ff,#fefce8)`,
+  floral:`radial-gradient(circle at 20% 30%,rgba(244,114,182,0.15) 0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(251,191,36,0.15) 0%,transparent 50%),linear-gradient(135deg,#fdf4ff,#fefce8)`,
+  geometric:`repeating-linear-gradient(45deg,rgba(251,191,36,0.1) 0px,rgba(251,191,36,0.1) 20px,transparent 20px,transparent 40px),linear-gradient(135deg,#fdf4ff,#fefce8)`,
+  watercolor:`radial-gradient(ellipse at top left,rgba(244,114,182,0.2),transparent 50%),radial-gradient(ellipse at bottom right,rgba(251,191,36,0.2),transparent 50%),linear-gradient(135deg,#fff,#fefce8)`
+};
+
+// ============ UPDATE CARD ============
+function updateCard(){
+  // Text content
+  document.getElementById('coupleNames').innerHTML=`${document.getElementById('brideName').value}<br>&<br>${document.getElementById('groomName').value}`;
+  document.getElementById('subtitleText').textContent=document.getElementById('subtitle').value.toUpperCase();
+  document.getElementById('dateTimeText').textContent=document.getElementById('eventDate').value;
+  document.getElementById('venueText').textContent=document.getElementById('venue').value;
+  document.getElementById('messageText').textContent=document.getElementById('message').value;
+
+  // Styling
+  const font=document.getElementById('fontStyle').value;
+  document.getElementById('cardContent').style.fontFamily=font;
+  document.getElementById('cardBorder').style.borderColor=state.primaryColor;
+  document.getElementById('cardBg').style.background=patterns[state.bgPattern];
+  document.getElementById('coupleNames').style.color=state.primaryColor;
+  document.querySelectorAll('.ornament').forEach(o=>o.style.color=state.primaryColor);
+}
+
+// ============ ANIMATIONS ============
+function toggleAnimation(type){
+  state.animations[type]=!state.animations[type];
+  const card=document.getElementById('invitationCard');
+  card.classList.toggle('animate-'+type,state.animations[type]);
+
+  if(type==='sparkle'){
+    if(state.animations.sparkle){createSparkles()}else{removeSparkles()}
+  }
+}
+
+function createSparkles(){
+  for(let i=0;i<30;i++){
+    const sparkle=document.createElement('div');sparkle.className='sparkle';
+    sparkle.style.cssText=`position:absolute;width:4px;height:4px;background:${state.primaryColor};border-radius:50%;pointer-events:none;z-index:5;animation:sparkleAnim ${2+Math.random()*3}s linear infinite`;
+    sparkle.style.left=Math.random()*100+'%';sparkle.style.top=Math.random()*100+'%';
+    document.getElementById('invitationCard').appendChild(sparkle);
+  }
+  if(!document.getElementById('sparkleStyle')){
+    const style=document.createElement('style');style.id='sparkleStyle';
+    style.textContent=`@keyframes sparkleAnim{0%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0)}}`;
+    document.head.appendChild(style);
+  }
+}
+function removeSparkles(){document.querySelectorAll('.sparkle').forEach(s=>s.remove())}
+
+// ============ TOOLBAR ACTIONS ============
+function zoomCard(scale){state.zoom=Math.max(0.5,Math.min(1.2,state.zoom*scale));document.getElementById('invitationCard').style.transform=`scale(${state.zoom})`}
+function toggleFullscreen(){if(!document.fullscreenElement){document.documentElement.requestFullscreen()}else{document.exitFullscreen()}}
+
+// ============ EXPORT PNG ============
+function exportPNG(){
+  // Use html2canvas via CDN for export
+  if(!window.html2canvas){
+    const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    script.onload=()=>capturePNG();document.head.appendChild(script);
+  }else{capturePNG()}
+}
+function capturePNG(){
+  const card=document.getElementById('invitationCard');const originalTransform=card.style.transform;card.style.transform='scale(1)';
+  html2canvas(card,{backgroundColor:'#fff',scale:2}).then(canvas=>{card.style.transform=originalTransform;const link=document.createElement('a');link.download='engagement-invitation.png';link.href=canvas.toDataURL();link.click()}).catch(err=>{card.style.transform=originalTransform;alert('Export failed: '+err.message)});
+}
+
+// ============ RESET ============
+function resetCard(){
+  document.getElementById('brideName').value='Ananya';
+  document.getElementById('groomName').value='Arjun';
+  document.getElementById('subtitle').value='Together Forever';
+  document.getElementById('eventDate').value='Sunday, 14th December 2026 | 6:00 PM';
+  document.getElementById('venue').value='The Grand Palace Hall, MG Road, Pune, Maharashtra';
+  document.getElementById('message').value='With hearts full of joy, we invite you to celebrate our engagement and witness the beginning of our forever.';
+  document.getElementById('fontStyle').value="'Playfair Display', serif";
+  document.getElementById('bgPattern').value='gradient';
+  state.primaryColor='#f472b6';state.animations={fade:true,glow:false,sparkle:false};
+  document.querySelectorAll('.color-swatch').forEach((s,i)=>s.classList.toggle('active',i===0));
+  document.getElementById('invitationCard').className='card animate-fade';
+  removeSparkles();updateCard();
+}
+
+// ============ ERROR HANDLING ============
+window.addEventListener('error',(e)=>{console.error('Editor Error:',e.message);alert('Something went wrong. Please refresh the page.')});
+
+// ============ INITIAL RENDER ============
+updateCard();
+</script>
+</body>
+</html>
